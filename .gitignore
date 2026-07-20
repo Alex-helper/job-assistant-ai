@@ -1,0 +1,62 @@
+# secrets & local env
+.env
+.env.local
+.env.*.local
+.admin_token
+
+# python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.bat
+!启动公网访问.bat
+
+# runtime data (orders, licenses — do not publish)
+data/*
+!data/.gitkeep
+
+# Feishu sync raw blobs (large PDFs / encrypted dumps)
+knowledge/feishu_raw/
+scripts/_feishu_js/
+scripts/_feishu_probe.html
+
+# tunnel tools & logs
+tools/
+logs/
+
+# build / logs
+*.log
+dist/
+build/
+!.env.example
+config.json
+**/env.local.js
+docs/PROMPT_HISTORY*.md
+**/PROMPT_HISTORY*.md
+*.pyc
+node_modules/
+*.lnk
+
+# --- secrets / scraped dumps (do not publish) ---
+knowledge/feishu/
+scripts/_unlock_resp.json
+scripts/feishu_try_password*.py
+scripts/feishu_unlock*.py
+scripts/probe_*.py
+scripts/_parse_sogou*.py
+scripts/scan_java_unlock.py
+scripts/retry_failed_feishu.py
+scripts/fetch_feishu_docs.py
+scripts/fetch_java_*.py
+scripts/feishu_one_doc.py
