@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>求职助手 · 管理后台</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh}
+  header{background:#1e293b;color:#fff;padding:0 28px;height:56px;display:flex;align-items:center;justify-content:space-between}
+  header h1{font-size:16px;font-weight:700}
+  header small{font-size:13px;opacity:.6}
+  main{max-width:1000px;margin:0 auto;padding:28px 16px}
+  /* 登录页 */
+  .login-card{background:#fff;border-radius:14px;padding:40px;max-width:360px;margin:80px auto;box-shadow:0 4px 20px rgba(0,0,0,.1)}
+  .login-card h2{margin-bottom:20px;font-size:20px}
+  /* 表单 */
+  label{font-size:13px;font-weight:500;display:block;margin-bottom:5px;color:#475569}
+  input,textarea{width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;font-size:14px;outline:none;margin-bottom:14px;font-family:inherit;transition:border-color .2s}
+  input:focus,textarea:focus{border-color:#6366f1}
+  textarea{resize:vertical;min-height:60px}
+  /* 按钮 */
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;transition:background .15s}
+  .btn-primary{background:#6366f1;color:#fff}.btn-primary:hover{background:#4f46e5}
+  .btn-danger{background:#fef2f2;color:#dc2626;border:1px solid #fecaca}.btn-danger:hover{background:#fee2e2}
+  .btn-success{background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0}.btn-success:hover{background:#dcfce7}
+  .btn-sm{padding:5px 12px;font-size:13px}
+  .btn-full{width:100%}
+  /* 卡片 */
+  .card{background:#fff;border-radius:12px;padding:20px;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,.07);border:1px solid #e2e8f0}
+  .card-title{font-size:14px;font-weight:700;color:#64748b;margin-bottom:16px;text-transform:uppercase;letter-spacing:.4px}
+  /* 统计格 */
+  .stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:20px}
+  .stat{background:#fff;border-radius:10px;padding:16px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.07);border:1px solid #e2e8f0}
+  .stat-val{font-size:28px;font-weight:800;color:#6366f1}
+  .stat-label{font-size:12px;color:#94a3b8;margin-top:4px}
+  /* 订单表格 */
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{text-align:left;padding:8px 12px;font-size:12px;color:#64748b;font-weight:600;border-bottom:1px solid #e2e8f0;background:#f8fafc}
+  td{padding:10px 12px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
+  tr:hover td{background:#f8fafc}
+  .badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600}
+  .b-pending{background:#fef9c3;color:#a16207}
+  .b-review{background:#dbeafe;color:#1d4ed8}
+  .b-active{background:#dcfce7;color:#15803d}
+  .b-rejected{background:#fee2e2;color:#b91c1c}
+  /* 标签页 */
+  .tabs{display:flex;gap:4px;margin-bottom:20px;background:#e2e8f0;padding:4px;border-radius:10px;width:fit-content}
+  .tab-btn{padding:7px 16px;border:none;background:none;border-radius:7px;cursor:pointer;font-size:14px;color:#64748b;font-weight:500}
+  .tab-btn.active{background:#fff;color:#1e293b;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+  .tab-content{display:none}.tab-content.active{display:block}
+  /* 二维码上传 */
+  .qr-upload-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .qr-box{border:2px dashed #cbd5e1;border-radius:10px;padding:16px;text-align:center}
+  .qr-box img{max-width:140px;max-height:140px;border-radius:8px;margin-bottom:8px;display:block;margin:0 auto 8px}
+  .qr-box .qr-hint{font-size:12px;color:#94a3b8;margin-bottom:8px}
+  input[type=file]{display:none}
+  .err{color:#dc2626;font-size:13px;margin-top:6px}
+  .suc{color:#16a34a;font-size:13px;margin-top:6px}
+  /* 过滤栏 */
+  .filter-bar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+  .filter-btn{padding:5px 14px;border:1px solid #e2e8f0;background:#fff;border-radius:20px;font-size:13px;cursor:pointer;color:#64748b}
+  .filter-btn.active{border-color:#6366f1;color:#6366f1;background:#f5f3ff}
+</style>
+</head>
+<body>
+
+<!-- 登录遮罩 -->
+<div id="loginOverlay" style="position:fixed;inset:0;background:#f1f5f9;z-index:999;display:flex;align-items:center;justify-content:center">
+  <div class="login-card">
+    <h2>🔐 管理后台登录</h2>
+    <label>管理员密码</label>
+    <input type="password" id="loginPwd" placeholder="默认：admin123" onkeydown="if(event.key==='Enter')doAdminLogin()">
+    <button class="btn btn-primary btn-full" onclick="doAdminLogin()">登录</button>
+    <div class="err" id="loginErr" style="display:none"></div>
+  </div>
+</div>
+
+<header>
+  <h1>⚙️ 求职助手 · 管理后台</h1>
+  <div style="display:flex;align-items:center;gap:14px">
+    <small id="hdrPwd"></small>
+    <a href="/" style="color:#94a3b8;font-size:13px">← 返回主页</a>
+  </div>
+</header>
+
+<main id="adminMain" style="display:none">
+
+  <!-- 统计卡 -->
+  <div class="stats" id="statsRow"></div>
+
+  <!-- 标签页 -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('orders',this)">📋 订单管理</button>
+    <button class="tab-btn" onclick="switchTab('config',this)">⚙️ 收款码配置</button>
+    <button class="tab-btn" onclick="switchTab('users',this)">👥 用户列表</button>
+  </div>
+
+  <!-- 订单管理 -->
+  <div class="tab-content active" id="tab-orders">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div class="card-title" style="margin:0">订单列表</div>
+        <button class="btn btn-sm" onclick="loadOrders()">🔄 刷新</button>
+      </div>
+      <div class="filter-bar">
+        <button class="filter-btn active" data-filter="all" onclick="filterOrders(this)">全部</button>
+        <button class="filter-btn" data-filter="pending_payment" onclick="filterOrders(this)">待付款</button>
+        <button class="filter-btn" data-filter="pending_review" onclick="filterOrders(this)">待审核 ⚡</button>
+        <button class="filter-btn" data-filter="active" onclick="filterOrders(this)">已激活</button>
+        <button class="filter-btn" data-filter="rejected" onclick="filterOrders(this)">已拒绝</button>
+      </div>
+      <div style="overflow-x:auto">
+        <table id="ordersTable">
+          <thead>
+            <tr>
+              <th>订单号</th><th>姓名</th><th>邮箱</th><th>套餐</th><th>金额</th>
+              <th>支付方式</th><th>状态</th><th>提交时间</th><th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="ordersTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- 收款码配置 -->
+  <div class="tab-content" id="tab-config">
+    <div class="card">
+      <div class="card-title">收款二维码上传</div>
+      <p style="font-size:13px;color:#64748b;margin-bottom:16px">上传你的个人收款码（支付宝 / 微信），用户下单后会看到此二维码扫码付款。</p>
+      <div class="qr-upload-row">
+        <div class="qr-box">
+          <p style="font-size:13px;font-weight:600;margin-bottom:10px;color:#1d4ed8">💙 支付宝收款码</p>
+          <img id="alipayPreview" style="display:none" alt="支付宝收款码">
+          <div class="qr-hint" id="alipayHint">尚未上传</div>
+          <label for="alipayFile" class="btn btn-sm" style="cursor:pointer;display:inline-block;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe">选择图片</label>
+          <input type="file" id="alipayFile" accept="image/*" onchange="previewQr(this,'alipayPreview','alipayHint','alipayB64')">
+          <input type="hidden" id="alipayB64">
+        </div>
+        <div class="qr-box">
+          <p style="font-size:13px;font-weight:600;margin-bottom:10px;color:#15803d">💚 微信收款码</p>
+          <img id="wechatPreview" style="display:none" alt="微信收款码">
+          <div class="qr-hint" id="wechatHint">尚未上传</div>
+          <label for="wechatFile" class="btn btn-sm" style="cursor:pointer;display:inline-block;background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0">选择图片</label>
+          <input type="file" id="wechatFile" accept="image/*" onchange="previewQr(this,'wechatPreview','wechatHint','wechatB64')">
+          <input type="hidden" id="wechatB64">
+        </div>
+      </div>
+      <div style="margin-top:16px">
+        <button class="btn btn-primary" onclick="saveQrConfig()">保存收款码</button>
+        <span class="suc" id="qrSaveTip" style="display:none">✓ 已保存</span>
+        <span class="err" id="qrSaveErr" style="display:none"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">修改管理员密码</div>
+      <label>当前密码</label>
+      <input type="password" id="cfgCurPwd">
+      <label>新密码</label>
+      <input type="password" id="cfgNewPwd" placeholder="留空则不修改">
+      <button class="btn btn-primary" onclick="changePwd()">保存</button>
+      <span class="suc" id="pwdTip" style="display:none">✓ 密码已更新</span>
+      <span class="err" id="pwdErr" style="display:none"></span>
+    </div>
+  </div>
+
+  <!-- 用户列表 -->
+  <div class="tab-content" id="tab-users">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div class="card-title" style="margin:0">已开通用户</div>
+        <button class="btn btn-sm" onclick="loadUsers()">🔄 刷新</button>
+      </div>
+      <div id="usersContent" style="overflow-x:auto"></div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+let _pwd = '';
+let _allOrders = [];
+let _curFilter = 'all';
+
+// ── 登录 ────────────────────────────────────────────────────
+async function doAdminLogin() {
+  const pwd = document.getElementById('loginPwd').value;
+  const errEl = document.getElementById('loginErr');
+  errEl.style.display = 'none';
+  try {
+    const r = await fetch('/api/admin/orders?password=' + encodeURIComponent(pwd));
+    if (r.status === 403) { errEl.textContent = '密码错误'; errEl.style.display = 'block'; return; }
+    _pwd = pwd;
+    document.getElementById('loginOverlay').style.display = 'none';
+    document.getElementById('adminMain').style.display = 'block';
+    document.getElementById('hdrPwd').textContent = '已登录';
+    loadAll();
+    loadQrConfig();
+  } catch(e) {
+    errEl.textContent = '请求失败，请检查服务是否运行'; errEl.style.display = 'block';
+  }
+}
+document.getElementById('loginPwd').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doAdminLogin();
+});
+
+function loadAll() { loadOrders(); loadUsers(); }
+
+// ── 订单 ────────────────────────────────────────────────────
+async function loadOrders() {
+  const r = await fetch('/api/admin/orders?password=' + encodeURIComponent(_pwd));
+  _allOrders = await r.json();
+  renderOrders();
+  renderStats();
+}
+
+function renderStats() {
+  const total     = _allOrders.length;
+  const pending   = _allOrders.filter(o => o.status === 'pending_review').length;
+  const active    = _allOrders.filter(o => o.status === 'active').length;
+  const revenue   = _allOrders.filter(o => o.status === 'active').reduce((s,o) => s + (o.amount||0), 0);
+  document.getElementById('statsRow').innerHTML = `
+    <div class="stat"><div class="stat-val">${total}</div><div class="stat-label">总订单</div></div>
+    <div class="stat"><div class="stat-val" style="color:#f59e0b">${pending}</div><div class="stat-label">待审核</div></div>
+    <div class="stat"><div class="stat-val" style="color:#10b981">${active}</div><div class="stat-label">已激活</div></div>
+    <div class="stat"><div class="stat-val">¥${revenue}</div><div class="stat-label">累计收入</div></div>`;
+}
+
+function filterOrders(btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  _curFilter = btn.dataset.filter;
+  renderOrders();
+}
+
+function renderOrders() {
+  const list = _curFilter === 'all' ? _allOrders : _allOrders.filter(o => o.status === _curFilter);
+  const statusMap = {
+    pending_payment: ['b-pending','待付款'],
+    pending_review:  ['b-review','待审核'],
+    active:          ['b-active','已激活'],
+    rejected:        ['b-rejected','已拒绝'],
+  };
+  const tbody = document.getElementById('ordersTbody');
+  if (!list.length) {
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#94a3b8">暂无订单</td></tr>';
+    return;
+  }
+  tbody.innerHTML = [...list].reverse().map(o => {
+    const [cls, label] = statusMap[o.status] || ['b-pending', o.status];
+    const canActivate = o.status === 'pending_review' || o.status === 'pending_payment';
+    const canReject   = o.status === 'pending_review' || o.status === 'pending_payment';
+    return `<tr>
+      <td><code style="font-size:12px">${esc(o.id)}</code></td>
+      <td>${esc(o.name||'-')}</td>
+      <td style="color:#6366f1">${esc(o.email)}</td>
+      <td>${esc(o.plan_name||o.plan)} <small style="color:#94a3b8">¥${o.amount}</small></td>
+      <td style="font-weight:700;color:#6366f1">¥${o.amount}</td>
+      <td>${o.pay_method === 'wechat' ? '💚微信' : '💙支付宝'}</td>
+      <td><span class="badge ${cls}">${label}</span></td>
+      <td style="color:#94a3b8;font-size:12px">${(o.submitted_at||o.created_at||'').slice(0,16)}</td>
+      <td style="display:flex;gap:6px">
+        ${canActivate ? `<button class="btn btn-success btn-sm" onclick="activate('${o.id}')">✓ 开通</button>` : ''}
+        ${canReject   ? `<button class="btn btn-danger  btn-sm" onclick="reject('${o.id}')">✗ 拒绝</button>` : ''}
+        ${o.status === 'active' ? `<span style="font-size:12px;color:#94a3b8">到期：${(o.expires_at||'').slice(0,10)}</span>` : ''}
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+async function activate(id) {
+  if (!confirm('确定开通此订单？')) return;
+  const r = await fetch('/api/admin/activate', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ order_id: id, password: _pwd })
+  });
+  const d = await r.json();
+  if (d.ok) { alert('✅ 已开通！到期时间：' + d.expires_at); loadAll(); }
+  else alert('失败：' + (d.detail||'未知错误'));
+}
+
+async function reject(id) {
+  if (!confirm('确定拒绝此订单？')) return;
+  const r = await fetch('/api/admin/reject', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ order_id: id, password: _pwd })
+  });
+  const d = await r.json();
+  if (d.ok) loadAll();
+  else alert('失败：' + (d.detail||'未知错误'));
+}
+
+// ── 用户列表 ─────────────────────────────────────────────────
+async function loadUsers() {
+  const r = await fetch('/api/admin/orders?password=' + encodeURIComponent(_pwd));
+  const orders = await r.json();
+  // 从激活订单中汇聚用户
+  const users = {};
+  orders.filter(o => o.status === 'active').forEach(o => {
+    const e = o.email;
+    if (!users[e] || users[e].expires_at < o.expires_at) {
+      users[e] = { name: o.name||'', plan: o.plan_name||o.plan, expires_at: o.expires_at||'' };
+    }
+  });
+  const entries = Object.entries(users);
+  const now = new Date();
+  if (!entries.length) {
+    document.getElementById('usersContent').innerHTML = '<p style="color:#94a3b8;text-align:center;padding:20px">暂无已开通用户</p>';
+    return;
+  }
+  document.getElementById('usersContent').innerHTML = `
+    <table>
+      <thead><tr><th>邮箱</th><th>姓名</th><th>套餐</th><th>到期时间</th><th>状态</th></tr></thead>
+      <tbody>${entries.map(([email, u]) => {
+        const exp = u.expires_at ? new Date(u.expires_at) : null;
+        const active = exp && exp > now;
+        return `<tr>
+          <td style="color:#6366f1">${esc(email)}</td>
+          <td>${esc(u.name||'-')}</td>
+          <td>${esc(u.plan)}</td>
+          <td>${(u.expires_at||'').slice(0,16)}</td>
+          <td><span class="badge ${active?'b-active':'b-rejected'}">${active?'有效':'已过期'}</span></td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>`;
+}
+
+// ── 收款码配置 ────────────────────────────────────────────────
+async function loadQrConfig() {
+  try {
+    const r = await fetch('/api/admin/pay-config?password=' + encodeURIComponent(_pwd));
+    if (!r.ok) return;
+    const d = await r.json();
+    if (d.alipay_qr) {
+      const img = document.getElementById('alipayPreview');
+      img.src = d.alipay_qr; img.style.display = 'block';
+      document.getElementById('alipayHint').textContent = '已上传';
+    }
+    if (d.wechat_qr) {
+      const img = document.getElementById('wechatPreview');
+      img.src = d.wechat_qr; img.style.display = 'block';
+      document.getElementById('wechatHint').textContent = '已上传';
+    }
+  } catch(e) {}
+}
+
+function previewQr(input, imgId, hintId, b64Id) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 500 * 1024) { alert('图片不能超过 500KB，请压缩后上传'); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    const b64 = e.target.result;
+    document.getElementById(imgId).src = b64;
+    document.getElementById(imgId).style.display = 'block';
+    document.getElementById(hintId).textContent = '已选择：' + file.name;
+    document.getElementById(b64Id).value = b64;
+  };
+  reader.readAsDataURL(file);
+}
+
+async function saveQrConfig() {
+  const alipay_qr = document.getElementById('alipayB64').value;
+  const wechat_qr = document.getElementById('wechatB64').value;
+  const tipEl = document.getElementById('qrSaveTip');
+  const errEl = document.getElementById('qrSaveErr');
+  tipEl.style.display = 'none'; errEl.style.display = 'none';
+  const r = await fetch('/api/admin/pay-config', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ admin_password: _pwd, alipay_qr, wechat_qr })
+  });
+  const d = await r.json();
+  if (d.ok) { tipEl.style.display = 'inline'; setTimeout(() => tipEl.style.display='none', 2500); }
+  else { errEl.textContent = d.detail||'保存失败'; errEl.style.display = 'inline'; }
+}
+
+async function changePwd() {
+  const cur = document.getElementById('cfgCurPwd').value;
+  const np  = document.getElementById('cfgNewPwd').value.trim();
+  const tipEl = document.getElementById('pwdTip');
+  const errEl = document.getElementById('pwdErr');
+  tipEl.style.display='none'; errEl.style.display='none';
+  if (!np) { errEl.textContent='新密码不能为空'; errEl.style.display='inline'; return; }
+  const r = await fetch('/api/admin/pay-config', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ admin_password: cur, new_password: np })
+  });
+  const d = await r.json();
+  if (d.ok) { _pwd = np; tipEl.style.display='inline'; }
+  else { errEl.textContent = d.detail||'失败'; errEl.style.display='inline'; }
+}
+
+// ── 工具 ────────────────────────────────────────────────────
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+  if (name === 'users') loadUsers();
+}
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+</body>
+</html>
